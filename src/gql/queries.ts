@@ -61,6 +61,13 @@ const LOAD_LIBRARY_CLEARANCE_STUDENTS = gql`
           }
         }
       }
+      rejection_logs {
+        clearance_id
+        reject_reason
+        rejected_at
+        rejected_by
+        rejected_by_user
+      }
     }
   }
 `;

@@ -141,7 +141,7 @@ export function ClearancePage() {
     }
   };
 
-  // console.log("data", data);
+  console.log("data", data);
 
   useEffect(() => {
     if (data) {
