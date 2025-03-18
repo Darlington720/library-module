@@ -60,25 +60,47 @@ interface BorrowRecord {
   condition: "good" | "damaged" | "lost";
 }
 
+// Update the Rejection interface to match your GraphQL data structure
 interface Rejection {
-  reason: string;
-  rejectedBy: string;
-  rejectedAt: string | Date;
-  department: string;
+  clearance_id: string;
+  reject_reason: string;
+  rejected_at: string | Date;
+  rejected_by: string;
+  rejected_by_user: string;
 }
 
+// Update the StudentProfileProps interface to use student.rejection_logs
 interface StudentProfileProps {
-  student: Student;
+  student: Student & {
+    rejection_logs?: Rejection[];
+  };
   clearanceRequest: ClearanceRequest;
   borrowRecords: BorrowRecord[];
-  rejectionHistory?: Rejection[];
 }
+
+// Add this function to format the Unix timestamp
+const formatTimestamp = (timestamp: string | number | Date): string => {
+  // Convert string to number if it's a string
+  const timestampNum =
+    typeof timestamp === "string" ? Number.parseInt(timestamp, 10) : timestamp;
+
+  // Create a new Date object from the timestamp
+  const date = new Date(timestampNum);
+
+  // Format the date
+  return new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+};
 
 export function StudentProfile({
   student,
   clearanceRequest,
   borrowRecords,
-  rejectionHistory = [],
 }: StudentProfileProps) {
   const getStatusColor = (status: ClearanceRequest["status"]) => {
     switch (status) {
@@ -103,7 +125,9 @@ export function StudentProfile({
     (record) => record.condition === "damaged" || record.condition === "lost"
   );
 
-  const hasRejectionHistory = rejectionHistory && rejectionHistory.length > 0;
+  // In the StudentProfile component, replace the hasRejectionHistory line with:
+  const hasRejectionHistory =
+    student.rejection_logs && student.rejection_logs.length > 0;
 
   return (
     <div className="space-y-6">
@@ -158,13 +182,16 @@ export function StudentProfile({
       <Tabs defaultValue="obligations" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="obligations">Library Obligations</TabsTrigger>
+          {/* Replace the TabsTrigger for rejections with: */}
           <TabsTrigger value="rejections" className="relative">
-            Rejection History
-            {hasRejectionHistory && (
-              <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
-                {rejectionHistory.length}
-              </span>
-            )}
+            <div className="flex items-center">
+              Rejection History
+              {hasRejectionHistory && (
+                <Badge variant="destructive" className="ml-2">
+                  {student.rejection_logs.length}
+                </Badge>
+              )}
+            </div>
           </TabsTrigger>
         </TabsList>
 
@@ -246,7 +273,7 @@ export function StudentProfile({
           </Card>
         </TabsContent>
 
-        {/* Rejection History Tab */}
+        {/* Replace the entire Rejection History TabsContent with: */}
         <TabsContent value="rejections">
           <Card>
             <CardHeader>
@@ -266,18 +293,18 @@ export function StudentProfile({
                       <TableHead>Date</TableHead>
                       <TableHead>Reason</TableHead>
                       <TableHead>Rejected By</TableHead>
-                      <TableHead>Department</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {rejectionHistory.map((rejection, index) => (
+                    {student.rejection_logs.map((rejection, index) => (
                       <TableRow key={index}>
                         <TableCell className="font-medium">
-                          {new Date(rejection.rejectedAt).toLocaleDateString()}
+                          {formatTimestamp(rejection.rejected_at)}
                         </TableCell>
-                        <TableCell>{rejection.reason}</TableCell>
-                        <TableCell>{rejection.rejectedBy}</TableCell>
-                        <TableCell>{rejection.department}</TableCell>
+                        <TableCell className="text-red-600 font-medium">
+                          {rejection.reject_reason}
+                        </TableCell>
+                        <TableCell>{rejection.rejected_by_user}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
