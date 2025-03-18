@@ -1,21 +1,25 @@
-import { CheckCircle, Clock, XCircle } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CheckCircle, Clock, XCircle } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export function ClearanceStats() {
+export function ClearanceStats({ students }: any) {
+  // console.log("students", students);
+  const pending = students.filter((std) => std.status == "pending");
+  const approved = students.filter((std) => std.status == "cleared");
+  const rejected = students.filter((std) => std.status == "rejected");
   return (
     <div className="grid gap-4 md:grid-cols-3">
       <Card className="border-none shadow-md">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Pending Requests</CardTitle>
+          <CardTitle className="text-sm font-medium">
+            Pending Requests
+          </CardTitle>
           <div className="rounded-full bg-yellow-100 p-2">
             <Clock className="h-4 w-4 text-yellow-600" />
           </div>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">42</div>
-          <p className="text-xs text-muted-foreground">
-            Awaiting review
-          </p>
+          <div className="text-2xl font-bold">{pending.length}</div>
+          <p className="text-xs text-muted-foreground">Awaiting review</p>
         </CardContent>
       </Card>
       <Card className="border-none shadow-md">
@@ -26,10 +30,8 @@ export function ClearanceStats() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">156</div>
-          <p className="text-xs text-muted-foreground">
-            This semester
-          </p>
+          <div className="text-2xl font-bold">{approved.length}</div>
+          <p className="text-xs text-muted-foreground">This semester</p>
         </CardContent>
       </Card>
       <Card className="border-none shadow-md">
@@ -40,10 +42,8 @@ export function ClearanceStats() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">8</div>
-          <p className="text-xs text-muted-foreground">
-            Requires attention
-          </p>
+          <div className="text-2xl font-bold">{rejected.length}</div>
+          <p className="text-xs text-muted-foreground">Requires attention</p>
         </CardContent>
       </Card>
     </div>

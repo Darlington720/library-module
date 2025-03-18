@@ -1,4 +1,5 @@
 import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/toaster";
 import { Dashboard } from "@/components/dashboard";
 import { useLazyQuery } from "@apollo/client";
 import { GET_MY_PROFILE } from "./gql/queries";
@@ -53,9 +54,12 @@ function App() {
   }
 
   return (
-    <ThemeProvider defaultTheme="light" storageKey="nkumba-theme">
-      <Dashboard />
-    </ThemeProvider>
+    <>
+      <ThemeProvider defaultTheme="light" storageKey="nkumba-theme">
+        <Dashboard />
+      </ThemeProvider>
+      <Toaster />
+    </>
   );
 }
 

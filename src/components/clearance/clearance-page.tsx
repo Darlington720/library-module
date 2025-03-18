@@ -1,42 +1,44 @@
-import { useState } from 'react';
-import { Search } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { ClearanceTable } from './clearance-table';
-import { ClearanceStats } from './clearance-stats';
-import { StudentProfile } from './student-profile';
-import { LibraryObligations } from './library-obligations';
-import { ClearanceActions } from './clearance-actions';
-import { useToast } from '@/hooks/use-toast';
+import { useEffect, useState } from "react";
+import { RefreshCcw, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { ClearanceTable } from "./clearance-table";
+import { ClearanceStats } from "./clearance-stats";
+import { StudentProfile } from "./student-profile";
+import { LibraryObligations } from "./library-obligations";
+import { ClearanceActions } from "./clearance-actions";
+import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Student, ClearanceRequest, BorrowRecord, Book } from '@/lib/types';
-import { ScrollArea } from '@/components/ui/scroll-area';
+} from "@/components/ui/dialog";
+import { Student, ClearanceRequest, BorrowRecord, Book } from "@/lib/types";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useQuery } from "@apollo/client";
+import { LOAD_LIBRARY_CLEARANCE_STUDENTS } from "@/gql/queries";
 
 // Mock data
 const mockStudent: Student = {
-  id: '1',
-  registrationNumber: 'NKU/2020/1234',
-  name: 'John Doe',
-  email: 'john.doe@student.nkumba.edu',
-  faculty: 'Computing and Technology',
-  course: 'Bachelor of Science in Software Engineering',
+  id: "1",
+  registrationNumber: "NKU/2020/1234",
+  name: "John Doe",
+  email: "john.doe@student.nkumba.edu",
+  faculty: "Computing and Technology",
+  course: "Bachelor of Science in Software Engineering",
   graduationYear: 2024,
-  enrollmentDate: new Date('2020-09-01'),
-  academicStatus: 'active',
-  phoneNumber: '+256 701 234 567',
-  address: 'Entebbe Road, Kampala',
+  enrollmentDate: new Date("2020-09-01"),
+  academicStatus: "active",
+  phoneNumber: "+256 701 234 567",
+  address: "Entebbe Road, Kampala",
 };
 
 const mockClearanceRequest: ClearanceRequest = {
-  id: '1',
-  studentId: '1',
-  status: 'pending',
-  submittedAt: new Date('2024-03-20'),
+  id: "1",
+  studentId: "1",
+  status: "pending",
+  submittedAt: new Date("2024-03-20"),
   hasPendingBooks: true,
   hasUnpaidFines: true,
   totalFineAmount: 25000,
@@ -48,60 +50,82 @@ const mockClearanceRequest: ClearanceRequest = {
 
 const mockBorrowRecords: (BorrowRecord & { book: Book })[] = [
   {
-    id: '1',
-    bookId: '1',
-    studentId: '1',
-    borrowDate: new Date('2024-02-01'),
-    dueDate: new Date('2024-02-15'),
-    status: 'overdue',
+    id: "1",
+    bookId: "1",
+    studentId: "1",
+    borrowDate: new Date("2024-02-01"),
+    dueDate: new Date("2024-02-15"),
+    status: "overdue",
     fine: 15000,
     book: {
-      id: '1',
-      title: 'Clean Code',
-      author: 'Robert C. Martin',
-      isbn: '9780132350884',
-      category: 'Technology',
-      status: 'borrowed',
-      location: 'Section B-04',
-      addedAt: new Date('2024-01-15'),
+      id: "1",
+      title: "Clean Code",
+      author: "Robert C. Martin",
+      isbn: "9780132350884",
+      category: "Technology",
+      status: "borrowed",
+      location: "Section B-04",
+      addedAt: new Date("2024-01-15"),
     },
   },
   {
-    id: '2',
-    bookId: '2',
-    studentId: '1',
-    borrowDate: new Date('2024-03-01'),
-    dueDate: new Date('2024-03-15'),
-    status: 'active',
+    id: "2",
+    bookId: "2",
+    studentId: "1",
+    borrowDate: new Date("2024-03-01"),
+    dueDate: new Date("2024-03-15"),
+    status: "active",
     book: {
-      id: '2',
-      title: 'Design Patterns',
-      author: 'Erich Gamma',
-      isbn: '9780201633610',
-      category: 'Technology',
-      status: 'borrowed',
-      location: 'Section B-05',
-      addedAt: new Date('2024-01-15'),
+      id: "2",
+      title: "Design Patterns",
+      author: "Erich Gamma",
+      isbn: "9780201633610",
+      category: "Technology",
+      status: "borrowed",
+      location: "Section B-05",
+      addedAt: new Date("2024-01-15"),
     },
   },
 ];
 
 export function ClearancePage() {
   const { toast } = useToast();
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-  const [selectedClearance, setSelectedClearance] = useState<ClearanceRequest | null>(null);
+  const [selectedClearance, setSelectedClearance] =
+    useState<ClearanceRequest | null>(null);
+  const { error, loading, data } = useQuery(LOAD_LIBRARY_CLEARANCE_STUDENTS, {
+    fetchPolicy: "network-only",
+  });
+  const [students, setStudents] = useState([]);
 
-  const handleStudentSelect = (student: Student, clearance: ClearanceRequest) => {
+  useEffect(() => {
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.",
+        description: error.message,
+      });
+    }
+  }, [error]);
+
+  const handleStudentSelect = (
+    student: Student,
+    clearance: ClearanceRequest
+  ) => {
+    console.log("student", student);
     setSelectedStudent(student);
-    setSelectedClearance(clearance);
+    setSelectedClearance(student);
   };
 
-  const handleStatusUpdate = (status: ClearanceRequest['status'], reason?: string) => {
+  const handleStatusUpdate = (
+    status: ClearanceRequest["status"],
+    reason?: string
+  ) => {
     if (selectedClearance) {
       // Update clearance status logic here
       toast({
-        title: 'Status Updated',
+        title: "Status Updated",
         description: `Clearance status updated to ${status}`,
       });
     }
@@ -111,11 +135,35 @@ export function ClearancePage() {
     if (selectedClearance) {
       // Apply override logic here
       toast({
-        title: 'Override Applied',
-        description: 'Manual override has been applied successfully',
+        title: "Override Applied",
+        description: "Manual override has been applied successfully",
       });
     }
   };
+
+  // console.log("data", data);
+
+  useEffect(() => {
+    if (data) {
+      setStudents(data.library_clearance_students);
+    }
+  }, [data]);
+
+  if (loading) {
+    return (
+      <div className="flex h-[450px] shrink-0 items-center justify-center rounded-md border border-dashed">
+        <div className="mx-auto flex max-w-[420px] flex-col items-center justify-center text-center">
+          <RefreshCcw className="h-10 w-10 text-muted-foreground animate-spin" />
+          <h3 className="mt-4 text-lg font-semibold">
+            Loading Clearance Students...
+          </h3>
+          <p className="mb-4 mt-2 text-sm text-muted-foreground">
+            Please wait while we fetch the latest information.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 p-6">
@@ -135,10 +183,11 @@ export function ClearancePage() {
         </div>
       </div>
 
-      <ClearanceStats />
+      <ClearanceStats students={students} />
       <ClearanceTable
         searchQuery={searchQuery}
         onStudentSelect={handleStudentSelect}
+        students={students}
       />
 
       {/* Student Profile Dialog */}
@@ -166,6 +215,7 @@ export function ClearancePage() {
                   clearanceRequest={selectedClearance}
                   onStatusUpdate={handleStatusUpdate}
                   onOverride={handleOverride}
+                  student={selectedStudent}
                 />
               </div>
             </ScrollArea>
